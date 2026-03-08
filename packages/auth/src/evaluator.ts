@@ -131,8 +131,13 @@ function evaluateParentChain(
   token: AuthorizationToken,
   now: IsoDatetime,
 ): AuthorizationDecision | null {
+  const visited = new Set<string>();
   let currentTokenId = token.parentTokenId;
   while (currentTokenId) {
+    if (visited.has(currentTokenId)) {
+      return makeDecision("PARENT_TOKEN_INACTIVE", now, token.id);
+    }
+    visited.add(currentTokenId);
     const parent = tokenStore.get(currentTokenId);
     if (!parent) {
       return makeDecision("PARENT_TOKEN_INACTIVE", now, token.id);
@@ -154,8 +159,13 @@ function evaluateParentScopeConstraint(
   actionScope: ActionScope,
   now: IsoDatetime,
 ): AuthorizationDecision | null {
+  const visited = new Set<string>();
   let currentTokenId = token.parentTokenId;
   while (currentTokenId) {
+    if (visited.has(currentTokenId)) {
+      break;
+    }
+    visited.add(currentTokenId);
     const parent = tokenStore.get(currentTokenId);
     if (!parent) {
       break;
@@ -177,8 +187,13 @@ async function evaluateParentBudgetConstraint(
   const childSpent = BigInt(await ctx.getSpent(token.id));
   const childRemaining = BigInt(token.budget.limit) - childSpent;
 
+  const visited = new Set<string>();
   let currentTokenId = token.parentTokenId;
   while (currentTokenId) {
+    if (visited.has(currentTokenId)) {
+      break;
+    }
+    visited.add(currentTokenId);
     const parent = ctx.tokenStore.get(currentTokenId);
     if (!parent) {
       break;

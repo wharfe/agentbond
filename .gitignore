@@ -28,6 +28,9 @@ coverage/
 # Logs
 *.log
 
+# Reviews
+.reviews/
+
 # WSL Zone.Identifier files
 *:Zone.Identifier
 

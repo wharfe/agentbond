@@ -17,6 +17,7 @@ import { InMemoryBudgetLedgerStore } from "./ledger.js";
 import { InMemoryAuditRecordStore } from "./audit.js";
 import {
   validateEvaluateActionInput,
+  validatePositiveIntegerString,
   type ValidationError,
 } from "./validator.js";
 
@@ -54,6 +55,10 @@ export class AuthService implements BudgetService {
       return await fn();
     } finally {
       resolve!();
+      // Clean up lock entry if no other operation is queued
+      if (this.locks.get(tokenId) === next) {
+        this.locks.delete(tokenId);
+      }
     }
   }
 
@@ -92,7 +97,8 @@ export class AuthService implements BudgetService {
     }
 
     return this.withLock(tokenId, async () => {
-      const now = action.timestamp;
+      // Use server-side timestamp to prevent expiry bypass via caller-controlled time
+      const now = new Date().toISOString() as IsoDatetime;
 
       const decision = await evaluate(
         {
@@ -142,6 +148,17 @@ export class AuthService implements BudgetService {
     amount: string,
     actionId: string,
   ): Promise<AuthorizationDecision> {
+    // Validate amount is a positive integer string
+    if (!validatePositiveIntegerString(amount)) {
+      return {
+        allowed: false,
+        reasonCode: "BUDGET_EXCEEDED",
+        message: "Invalid amount: must be a positive integer string",
+        retryable: false,
+        evaluatedAt: new Date().toISOString() as IsoDatetime,
+      } satisfies AuthorizationDecision;
+    }
+
     return this.withLock(tokenId, async () => {
       const now = new Date().toISOString() as IsoDatetime;
       const token = this.tokenStore.get(tokenId);

@@ -16,7 +16,7 @@ const ActionScopeSchema = z.object({
 });
 
 const BudgetSchema = z.object({
-  limit: z.string(),
+  limit: z.string().regex(/^[1-9]\d*$/, "Budget limit must be a positive integer string"),
   currency: z.literal("credits"),
   resetPolicy: z.enum(["per-task", "per-session", "never"]).optional(),
 });
@@ -28,7 +28,10 @@ export const IssueTokenSchema = z.object({
   issuedTo: AgentIdentitySchema,
   scopes: z.array(ActionScopeSchema).min(1),
   budget: BudgetSchema,
-  expiry: z.string(),
+  expiry: z.string().regex(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/,
+    "Expiry must be a valid RFC 3339 datetime string",
+  ),
   status: z.enum(["active", "suspended", "revoked"]).default("active"),
 });
 

@@ -1,6 +1,7 @@
 import type { AuthorizationToken } from "@agentbond/core";
 import { isScopeSubset } from "./scope.js";
 import type { TokenStore } from "./token-store.js";
+import { validateIsoDatetime, validatePositiveIntegerString } from "./validator.js";
 
 export interface IssueTokenParams {
   token: AuthorizationToken;
@@ -21,6 +22,18 @@ export async function issueToken(
   params: IssueTokenParams,
 ): Promise<AuthorizationToken> {
   const { token } = params;
+
+  // Validate required numeric and time fields regardless of parent
+  if (!validatePositiveIntegerString(token.budget.limit)) {
+    throw new Error(
+      "Token budget limit must be a positive integer string",
+    );
+  }
+  if (!validateIsoDatetime(token.expiry)) {
+    throw new Error(
+      "Token expiry must be a valid RFC 3339 datetime string",
+    );
+  }
 
   if (token.parentTokenId) {
     const parent = deps.tokenStore.get(token.parentTokenId);
