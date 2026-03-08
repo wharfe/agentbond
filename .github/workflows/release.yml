@@ -37,6 +37,9 @@ jobs:
           publish: pnpm release
           title: "chore: version packages"
           commit: "chore: version packages"
+          # Use GitHub API mode to avoid workflows permission issue
+          # when pushing branches that contain .github/workflows files
+          commitMode: github-api
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
