@@ -1,6 +1,6 @@
 {
   "name": "@agentbond/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Core type definitions for agentbond — agent-first governance infrastructure",
   "license": "MIT",
   "type": "module",

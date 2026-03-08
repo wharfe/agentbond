@@ -1,0 +1,13 @@
+# @agentbond/mcp-server
+
+## 0.1.0
+
+### Minor Changes
+
+- 324eb8d: Initial release — core types, authorization engine, and MCP server
+
+### Patch Changes
+
+- Updated dependencies [324eb8d]
+  - @agentbond/core@0.1.0
+  - @agentbond/auth@0.1.0
