@@ -10,3 +10,19 @@ export interface AuditRecord {
   reason?: string;
   timestamp: IsoDatetime;
 }
+
+// Storage adapter interface for AuditRecord persistence
+export interface AuditRecordStore {
+  append(record: AuditRecord): Promise<void>;
+  findByActionId(actionId: string): Promise<AuditRecord[]>;
+  findByTokenId(tokenId: string): Promise<AuditRecord[]>;
+  list(options?: AuditQueryOptions): Promise<AuditRecord[]>;
+}
+
+export interface AuditQueryOptions {
+  layer?: AuditRecord["layer"];
+  outcome?: AuditRecord["outcome"];
+  since?: IsoDatetime;
+  until?: IsoDatetime;
+  limit?: number;
+}

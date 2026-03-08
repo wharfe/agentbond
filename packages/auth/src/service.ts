@@ -2,6 +2,9 @@ import type {
   AuthorizationDecision,
   AuthorizationToken,
   AgentAction,
+  AuditRecord,
+  AuditRecordStore,
+  AuditQueryOptions,
   BudgetService,
   BudgetLedgerStore,
   IsoDatetime,
@@ -11,6 +14,7 @@ import { issueToken } from "./issuer.js";
 import type { TokenStore } from "./token-store.js";
 import { InMemoryTokenStore } from "./token-store.js";
 import { InMemoryBudgetLedgerStore } from "./ledger.js";
+import { InMemoryAuditRecordStore } from "./audit.js";
 import {
   validateEvaluateActionInput,
   type ValidationError,
@@ -19,6 +23,7 @@ import {
 export interface AuthServiceOptions {
   tokenStore?: TokenStore;
   ledgerStore?: BudgetLedgerStore;
+  auditStore?: AuditRecordStore;
 }
 
 /**
@@ -28,12 +33,14 @@ export interface AuthServiceOptions {
 export class AuthService implements BudgetService {
   private readonly tokenStore: TokenStore;
   private readonly ledgerStore: BudgetLedgerStore;
+  private readonly auditStore: AuditRecordStore;
   // Per-token lock to ensure atomic evaluate-then-consume
   private readonly locks = new Map<string, Promise<unknown>>();
 
   constructor(options?: AuthServiceOptions) {
     this.tokenStore = options?.tokenStore ?? new InMemoryTokenStore();
     this.ledgerStore = options?.ledgerStore ?? new InMemoryBudgetLedgerStore();
+    this.auditStore = options?.auditStore ?? new InMemoryAuditRecordStore();
   }
 
   private async withLock<T>(tokenId: string, fn: () => Promise<T>): Promise<T> {
@@ -111,6 +118,17 @@ export class AuthService implements BudgetService {
         });
       }
 
+      // Record audit trail
+      await this.auditStore.append({
+        id: `audit-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        actionId: action.id,
+        authorizationTokenId: decision.tokenId,
+        layer: "authorization",
+        outcome: decision.allowed ? "allowed" : "denied",
+        reason: decision.reasonCode,
+        timestamp: now,
+      });
+
       return decision;
     });
   }
@@ -176,6 +194,27 @@ export class AuthService implements BudgetService {
    */
   getToken(id: string): AuthorizationToken | undefined {
     return this.tokenStore.get(id);
+  }
+
+  /**
+   * Query audit records.
+   */
+  async getAuditLog(options?: AuditQueryOptions): Promise<AuditRecord[]> {
+    return this.auditStore.list(options);
+  }
+
+  /**
+   * Get audit records for a specific action.
+   */
+  async getAuditByActionId(actionId: string): Promise<AuditRecord[]> {
+    return this.auditStore.findByActionId(actionId);
+  }
+
+  /**
+   * Get audit records for a specific token.
+   */
+  async getAuditByTokenId(tokenId: string): Promise<AuditRecord[]> {
+    return this.auditStore.findByTokenId(tokenId);
   }
 
   /**

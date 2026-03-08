@@ -18,4 +18,4 @@ export type {
   ContractCondition,
 } from "./contract.js";
 export type { SettlementHook, SettlementRecord } from "./settlement.js";
-export type { AuditRecord } from "./audit.js";
+export type { AuditRecord, AuditRecordStore, AuditQueryOptions } from "./audit.js";
