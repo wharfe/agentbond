@@ -44,6 +44,9 @@ importers:
       '@agentbond/core':
         specifier: workspace:*
         version: link:../packages/core
+      '@agentbond/intent':
+        specifier: workspace:*
+        version: link:../packages/intent
       '@modelcontextprotocol/sdk':
         specifier: ^1.27.1
         version: 1.27.1(zod@3.25.76)

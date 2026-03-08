@@ -84,6 +84,46 @@ export const GetAuditByTokenIdSchema = z.object({
   tokenId: z.string(),
 });
 
+// Intent schemas
+
+const IntentEvidenceSchema = z.object({
+  type: z.enum(["human-instruction", "model-summary", "system-rule"]),
+  content: z.string().max(1000, "Evidence content must be 1000 characters or less"),
+});
+
+const IntentPolicySchema = z.object({
+  requireReasoning: z.boolean(),
+  auditLevel: z.enum(["none", "summary", "full"]),
+});
+
+export const RecordIntentSchema = z.object({
+  id: z.string().optional(),
+  actionId: z.string(),
+  tokenId: z.string(),
+  evidence: z.array(IntentEvidenceSchema).min(1),
+  triggeredBy: z.string().optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  createdAt: z.string().regex(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/,
+    "createdAt must be a valid RFC 3339 datetime string",
+  ),
+});
+
+export const EvaluateIntentPolicySchema = z.object({
+  actionId: z.string(),
+  tokenId: z.string(),
+  intentPolicy: IntentPolicySchema,
+  intentId: z.string().optional(),
+});
+
+export const GetIntentSchema = z.object({
+  intentId: z.string(),
+});
+
+export const GetIntentByActionSchema = z.object({
+  actionId: z.string(),
+});
+
 export const TOOL_DEFINITIONS = [
   {
     name: "agentbond_issue_token",
@@ -135,5 +175,27 @@ export const TOOL_DEFINITIONS = [
     name: "agentbond_get_audit_by_token",
     description: "Get audit records for a specific token ID.",
     inputSchema: GetAuditByTokenIdSchema,
+  },
+  {
+    name: "agentbond_record_intent",
+    description:
+      "Record an intent for an action — why the agent is performing this action. Evidence must be a summary (no raw logs). Required before action evaluation when the token has requireReasoning: true.",
+    inputSchema: RecordIntentSchema,
+  },
+  {
+    name: "agentbond_evaluate_intent_policy",
+    description:
+      "Evaluate intent policy for an action. Checks if an IntentRecord exists when requireReasoning is true. Records the result in the audit log with intentRef linkage based on auditLevel.",
+    inputSchema: EvaluateIntentPolicySchema,
+  },
+  {
+    name: "agentbond_get_intent",
+    description: "Retrieve an intent record by ID.",
+    inputSchema: GetIntentSchema,
+  },
+  {
+    name: "agentbond_get_intent_by_action",
+    description: "Retrieve an intent record by action ID.",
+    inputSchema: GetIntentByActionSchema,
   },
 ] as const;

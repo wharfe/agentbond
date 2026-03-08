@@ -1,12 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { AuthService } from "@agentbond/auth";
+import { AuthService, InMemoryAuditRecordStore } from "@agentbond/auth";
+import { IntentService } from "@agentbond/intent";
 import { TOOL_DEFINITIONS } from "./tools.js";
-import { handleToolCall } from "./handlers.js";
+import { handleToolCall, type ServiceDeps } from "./handlers.js";
 
 const VERSION = "0.1.0";
 
-function createServer(service: AuthService): McpServer {
+function createWorkerServer(deps: ServiceDeps): McpServer {
   const server = new McpServer({
     name: "agentbond",
     version: VERSION,
@@ -18,7 +19,7 @@ function createServer(service: AuthService): McpServer {
       tool.description,
       tool.inputSchema.shape,
       async (args: Record<string, unknown>) => {
-        return handleToolCall(service, tool.name, args);
+        return handleToolCall(deps, tool.name, args);
       },
     );
   }
@@ -41,8 +42,12 @@ export default {
     // MCP endpoint
     if (url.pathname === "/mcp") {
       // Stateless mode: create fresh server + transport per request
-      const service = new AuthService();
-      const server = createServer(service);
+      const auditStore = new InMemoryAuditRecordStore();
+      const deps: ServiceDeps = {
+        authService: new AuthService({ auditStore }),
+        intentService: new IntentService({ auditStore }),
+      };
+      const server = createWorkerServer(deps);
       const transport = new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
       });

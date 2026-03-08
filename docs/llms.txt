@@ -106,6 +106,38 @@ Get audit records for a specific token.
 | PARENT_SCOPE_EXCEEDED | Scope exceeds parent token | No |
 | PARENT_BUDGET_EXCEEDED | Budget exceeds parent remaining | No |
 
+## Intent Tools
+
+#### agentbond_record_intent
+Record an intent for an action — why the agent is performing this action.
+- Input: { actionId, tokenId, evidence: [{ type, content }], createdAt, id?, triggeredBy?, confidence? }
+- Output: IntentRecord
+- Errors: INVALID_INPUT (empty evidence, content > 1000 chars, invalid confidence)
+
+#### agentbond_evaluate_intent_policy
+Evaluate intent policy for an action. Checks if an IntentRecord exists when requireReasoning is true.
+- Input: { actionId, tokenId, intentPolicy: { requireReasoning, auditLevel }, intentId? }
+- Output: IntentDecision { allowed, reasonCode, message, retryable, evaluatedAt, intentId? }
+
+#### agentbond_get_intent
+Retrieve an intent record by ID.
+- Input: { intentId }
+- Output: IntentRecord
+
+#### agentbond_get_intent_by_action
+Retrieve an intent record by action ID.
+- Input: { actionId }
+- Output: IntentRecord
+
+## Intent Reason Codes
+
+| Code | Meaning | Retryable |
+|---|---|---|
+| ALLOWED | Intent recorded successfully | - |
+| INTENT_REQUIRED | Intent required by policy but not provided | Yes |
+| INTENT_NOT_FOUND | Specified intent record not found | No |
+| INVALID_INPUT | Invalid input | No |
+
 ## TypeScript Library Usage
 
 ```typescript

@@ -111,6 +111,52 @@ console.log(denied.retryable);  // true (parent might be reactivated)
 const log = await auth.getAuditLog({ outcome: "denied", limit: 10 });
 ```
 
+### Intent Layer — Record Why Actions Were Taken
+
+```typescript
+import { IntentService } from "@agentbond/intent";
+
+const intent = new IntentService();
+
+// 1. Record an intent — explain why the agent is acting
+const record = await intent.recordIntent({
+  actionId: "action-1",
+  tokenId: "token-1",
+  evidence: [
+    {
+      type: "human-instruction",
+      content: "User requested monthly invoice report",
+    },
+  ],
+  createdAt: new Date().toISOString(),
+});
+
+// 2. Evaluate intent policy — check if reasoning is provided
+const decision = await intent.evaluateAndRecord({
+  actionId: "action-1",
+  tokenId: "token-1",
+  intentPolicy: { requireReasoning: true, auditLevel: "summary" },
+});
+
+console.log(decision);
+// {
+//   allowed: true,
+//   reasonCode: "ALLOWED",
+//   message: "Intent recorded successfully",
+//   intentId: "intent-..."
+// }
+
+// Without an intent record, requireReasoning: true → denied
+const denied = await intent.evaluateAndRecord({
+  actionId: "action-no-intent",
+  tokenId: "token-1",
+  intentPolicy: { requireReasoning: true, auditLevel: "summary" },
+});
+
+console.log(denied.reasonCode); // "INTENT_REQUIRED"
+console.log(denied.retryable);  // true (record intent, then retry)
+```
+
 ## Authorization Decision Codes
 
 Every evaluation returns a machine-readable `AuthorizationDecision`:
@@ -128,12 +174,24 @@ Every evaluation returns a machine-readable `AuthorizationDecision`:
 | `PARENT_SCOPE_EXCEEDED` | Action exceeds parent scope | No |
 | `PARENT_BUDGET_EXCEEDED` | Budget exceeds parent remaining | No |
 
+## Intent Decision Codes
+
+Every intent evaluation returns a machine-readable `IntentDecision`:
+
+| Code | Meaning | Retryable |
+|---|---|---|
+| `ALLOWED` | Intent recorded successfully | — |
+| `INTENT_REQUIRED` | Intent record required by policy but not provided | Yes |
+| `INTENT_NOT_FOUND` | Specified intent record not found | No |
+| `INVALID_INPUT` | Invalid input | No |
+
 ## Packages
 
 | Package | Description | Version |
 |---|---|---|
 | [`@agentbond/core`](./packages/core) | Core type definitions and shared interfaces | [![npm](https://img.shields.io/npm/v/@agentbond/core)](https://www.npmjs.com/package/@agentbond/core) |
 | [`@agentbond/auth`](./packages/auth) | Authorization engine — token issuance, evaluation, budget management | [![npm](https://img.shields.io/npm/v/@agentbond/auth)](https://www.npmjs.com/package/@agentbond/auth) |
+| [`@agentbond/intent`](./packages/intent) | Intent layer — intent recording, evaluation, and audit integration | [![npm](https://img.shields.io/npm/v/@agentbond/intent)](https://www.npmjs.com/package/@agentbond/intent) |
 | [`@agentbond/mcp-server`](./mcp-server) | MCP server — expose agentbond as MCP tools | [![npm](https://img.shields.io/npm/v/@agentbond/mcp-server)](https://www.npmjs.com/package/@agentbond/mcp-server) |
 
 ## Architecture
