@@ -1,50 +1,92 @@
 # agentbond
 
-Agent-first governance infrastructure for AI agents.
-Provides authorization, intent proof, contracts, and settlement capabilities.
+> Agent-first governance infrastructure for AI agents.
 
-## MCP Server Tools
+agentbond lets AI agents issue, delegate, and enforce authorization tokens with scoped permissions and budget controls. Every action is audited. Designed for the Model Context Protocol (MCP) ecosystem.
 
-### agentbond_issue_token
+- Repository: https://github.com/wharfe/agentbond
+- License: MIT
+- npm: @agentbond/core, @agentbond/auth, @agentbond/mcp-server
+
+## When to use agentbond
+
+Use agentbond when an AI agent needs to:
+- Grant another agent permission to act on its behalf (delegation)
+- Enforce spending limits on delegated actions (budget control)
+- Restrict actions to specific domains, operations, and resources (scoping)
+- Audit all authorization decisions after the fact (audit trail)
+
+## Core Concepts
+
+### Authorization Token
+A token grants an agent (`issuedTo`) permission to perform actions within defined scopes, up to a budget limit, until an expiry time. Tokens can be chained: a child token's permissions must be a subset of its parent's.
+
+### Authorization Decision
+Every action evaluation returns a machine-readable decision:
+- `allowed: boolean` — whether the action is authorized
+- `reasonCode` — why (e.g., ALLOWED, BUDGET_EXCEEDED, SCOPE_MISMATCH)
+- `retryable: boolean` — whether the agent should retry later
+- `message` — human-readable explanation
+
+### Budget Ledger
+Budget consumption is tracked atomically. The spent amount is derived from ledger entries, never stored directly on the token.
+
+### Audit Record
+Every authorization decision (allowed or denied) is recorded with action ID, token ID, outcome, and timestamp.
+
+## MCP Server
+
+Install and run as an MCP server:
+
+```bash
+npx @agentbond/mcp-server
+```
+
+### Tools
+
+#### agentbond_issue_token
 Issue a new authorization token with scopes, budget, and expiry.
 Supports delegation chains via parentTokenId.
-- Input: { id, issuedBy, issuedTo, scopes, budget, expiry, parentTokenId? }
+- Input: { id, issuedBy, issuedTo, scopes, budget, expiry, parentTokenId?, status? }
 - Output: AuthorizationToken
+- Errors: Throws if child token exceeds parent scope/budget/expiry
 
-### agentbond_evaluate_action
-Evaluate an action against an authorization token.
-Consumes budget atomically if authorized.
+#### agentbond_evaluate_action
+Evaluate an action against an authorization token and consume budget atomically if allowed.
 - Input: { tokenId, action: { id, actor, scope, timestamp }, amount }
-- Output: AuthorizationDecision { allowed, reasonCode, message, retryable }
+- Output: AuthorizationDecision { allowed, reasonCode, message, retryable, evaluatedAt, tokenId? }
 
-### agentbond_revoke_token
-Permanently revoke a token. Child tokens are denied via cascade evaluation.
+#### agentbond_revoke_token
+Permanently revoke a token. Child tokens are denied via cascade evaluation (child status is not mutated).
 - Input: { tokenId }
+- Output: { ok, tokenId, status }
 
-### agentbond_suspend_token
-Temporarily suspend a token. Can be reactivated later.
+#### agentbond_suspend_token
+Temporarily suspend a token. Child tokens are denied while parent is suspended.
 - Input: { tokenId }
+- Output: { ok, tokenId, status }
 
-### agentbond_reactivate_token
-Reactivate a suspended token.
+#### agentbond_reactivate_token
+Reactivate a suspended token. Child tokens automatically become usable again.
 - Input: { tokenId }
+- Output: { ok, tokenId, status }
 
-### agentbond_get_token
-Retrieve a token by ID.
+#### agentbond_get_token
+Retrieve an authorization token by ID.
 - Input: { tokenId }
 - Output: AuthorizationToken
 
-### agentbond_get_audit_log
+#### agentbond_get_audit_log
 Query audit records with optional filters.
 - Input: { layer?, outcome?, since?, until?, limit? }
 - Output: AuditRecord[]
 
-### agentbond_get_audit_by_action
+#### agentbond_get_audit_by_action
 Get audit records for a specific action.
 - Input: { actionId }
 - Output: AuditRecord[]
 
-### agentbond_get_audit_by_token
+#### agentbond_get_audit_by_token
 Get audit records for a specific token.
 - Input: { tokenId }
 - Output: AuditRecord[]
@@ -61,5 +103,46 @@ Get audit records for a specific token.
 | SCOPE_MISMATCH | Action outside authorized scope | No |
 | BUDGET_EXCEEDED | Insufficient budget | Yes |
 | PARENT_TOKEN_INACTIVE | Parent token is inactive | Yes |
-| PARENT_SCOPE_EXCEEDED | Scope exceeds parent | No |
-| PARENT_BUDGET_EXCEEDED | Budget exceeds parent | No |
+| PARENT_SCOPE_EXCEEDED | Scope exceeds parent token | No |
+| PARENT_BUDGET_EXCEEDED | Budget exceeds parent remaining | No |
+
+## TypeScript Library Usage
+
+```typescript
+import { AuthService } from "@agentbond/auth";
+
+const service = new AuthService();
+
+// Issue a token
+const token = await service.issueToken({
+  id: "token-1",
+  issuedBy: { id: "principal-agent", type: "human" },
+  issuedTo: { id: "worker-agent", type: "ai" },
+  scopes: [{ domain: "api.example.com", operations: ["read"] }],
+  budget: { limit: "1000", currency: "credits" },
+  expiry: "2025-12-31T23:59:59Z",
+  status: "active",
+});
+
+// Evaluate an action
+const decision = await service.evaluateAndConsume("token-1", {
+  id: "action-1",
+  actor: { id: "worker-agent", type: "ai" },
+  scope: { domain: "api.example.com", operations: ["read"] },
+  timestamp: new Date().toISOString(),
+}, "100");
+
+if (decision.allowed) {
+  // Proceed with the action
+} else {
+  // Handle denial: decision.reasonCode, decision.retryable
+}
+```
+
+## Design Principles
+
+1. Discoverability — Agents discover tools via JSON Schema, no human explanation needed
+2. Predictability — Same input always produces same output; errors are machine-readable
+3. Least Privilege — Only grant the permissions that are needed
+4. Auditability — Every action is verifiable after the fact
+5. Zero Breaking Changes — Core interfaces maintain backward compatibility

@@ -17,21 +17,124 @@ This isn't about restricting agents. It's about making trust computable.
 
 ## Quick Start
 
+### As an MCP Server
+
+The fastest way to use agentbond is as an MCP server. Add to your MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "agentbond": {
+      "command": "npx",
+      "args": ["@agentbond/mcp-server"]
+    }
+  }
+}
+```
+
+This gives your AI agent 9 tools for authorization token management, action evaluation, and audit logging.
+
+### As a TypeScript Library
+
 ```bash
 npm install @agentbond/core @agentbond/auth
 ```
 
 ```typescript
-import type { AuthorizationToken } from "@agentbond/core";
-// Full usage examples coming with @agentbond/auth implementation
+import { AuthService } from "@agentbond/auth";
+
+const auth = new AuthService();
+
+// 1. Issue a token — grant an agent permission to act
+const token = await auth.issueToken({
+  id: "token-1",
+  issuedBy: { id: "principal", type: "human" },
+  issuedTo: { id: "worker-agent", type: "ai" },
+  scopes: [{ domain: "api.stripe.com", operations: ["read"], resources: ["/invoices/*"] }],
+  budget: { limit: "5000", currency: "credits" },
+  expiry: "2025-12-31T23:59:59Z",
+  status: "active",
+});
+
+// 2. Evaluate an action — check permission and consume budget atomically
+const decision = await auth.evaluateAndConsume(
+  "token-1",
+  {
+    id: "action-1",
+    actor: { id: "worker-agent", type: "ai" },
+    scope: { domain: "api.stripe.com", operations: ["read"], resources: ["/invoices/inv_123"] },
+    timestamp: new Date().toISOString(),
+  },
+  "100", // amount to consume
+);
+
+console.log(decision);
+// {
+//   allowed: true,
+//   reasonCode: "ALLOWED",
+//   message: "Authorization granted",
+//   retryable: false,
+//   evaluatedAt: "2025-03-08T...",
+//   tokenId: "token-1"
+// }
+
+// 3. Delegate — issue a child token with narrower permissions
+const childToken = await auth.issueToken({
+  id: "child-token-1",
+  parentTokenId: "token-1",
+  issuedBy: { id: "worker-agent", type: "ai" },
+  issuedTo: { id: "sub-agent", type: "ai" },
+  scopes: [{ domain: "api.stripe.com", operations: ["read"], resources: ["/invoices/*"] }],
+  budget: { limit: "1000", currency: "credits" }, // must not exceed parent
+  expiry: "2025-12-31T23:59:59Z",
+  status: "active",
+});
+
+// 4. Revoke — child tokens are denied via cascade evaluation
+auth.updateTokenStatus("token-1", "revoked");
+
+const denied = await auth.evaluateAndConsume(
+  "child-token-1",
+  {
+    id: "action-2",
+    actor: { id: "sub-agent", type: "ai" },
+    scope: { domain: "api.stripe.com", operations: ["read"] },
+    timestamp: new Date().toISOString(),
+  },
+  "50",
+);
+
+console.log(denied.reasonCode); // "PARENT_TOKEN_INACTIVE"
+console.log(denied.retryable);  // true (parent might be reactivated)
+
+// 5. Audit — query all authorization decisions
+const log = await auth.getAuditLog({ outcome: "denied", limit: 10 });
 ```
+
+## Authorization Decision Codes
+
+Every evaluation returns a machine-readable `AuthorizationDecision`:
+
+| Code | Meaning | Retryable |
+|---|---|---|
+| `ALLOWED` | Authorization granted | — |
+| `TOKEN_NOT_FOUND` | Token does not exist | No |
+| `TOKEN_EXPIRED` | Token has expired | No |
+| `TOKEN_REVOKED` | Token has been revoked | No |
+| `TOKEN_SUSPENDED` | Token is suspended | Yes |
+| `SCOPE_MISMATCH` | Action outside authorized scope | No |
+| `BUDGET_EXCEEDED` | Insufficient budget | Yes |
+| `PARENT_TOKEN_INACTIVE` | Parent token is not active | Yes |
+| `PARENT_SCOPE_EXCEEDED` | Action exceeds parent scope | No |
+| `PARENT_BUDGET_EXCEEDED` | Budget exceeds parent remaining | No |
 
 ## Packages
 
-| Package | Description | Status |
+| Package | Description | Version |
 |---|---|---|
-| [`@agentbond/core`](./packages/core) | Core type definitions and shared interfaces | 🚧 In development |
-| [`@agentbond/auth`](./packages/auth) | Authorization engine — token issuance, evaluation, budget management | 🚧 In development |
+| [`@agentbond/core`](./packages/core) | Core type definitions and shared interfaces | [![npm](https://img.shields.io/npm/v/@agentbond/core)](https://www.npmjs.com/package/@agentbond/core) |
+| [`@agentbond/auth`](./packages/auth) | Authorization engine — token issuance, evaluation, budget management | [![npm](https://img.shields.io/npm/v/@agentbond/auth)](https://www.npmjs.com/package/@agentbond/auth) |
+| [`@agentbond/mcp-server`](./mcp-server) | MCP server — expose agentbond as MCP tools | [![npm](https://img.shields.io/npm/v/@agentbond/mcp-server)](https://www.npmjs.com/package/@agentbond/mcp-server) |
 
 ## Architecture
 
@@ -56,12 +159,6 @@ All layers share the central concept of `AgentAction`.
 3. **Least Privilege** — Only grant the permissions that are needed
 4. **Auditability** — Every action is verifiable after the fact
 5. **Zero Breaking Changes** — Core interfaces maintain backward compatibility
-
-## Status
-
-**Phase: MVP (v0.x)** — Core types and authorization engine under active development.
-
-The API is not yet stable. Breaking changes may occur before v1.0.
 
 ## Contributing
 
