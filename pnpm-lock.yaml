@@ -77,6 +77,12 @@ importers:
         specifier: workspace:*
         version: link:../core
 
+  packages/settlement:
+    dependencies:
+      '@agentbond/core':
+        specifier: workspace:*
+        version: link:../core
+
 packages:
 
   '@babel/runtime@7.28.6':

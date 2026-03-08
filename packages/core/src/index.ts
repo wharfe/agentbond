@@ -29,5 +29,18 @@ export type {
   ContractReasonCode,
   ContractStore,
 } from "./contract.js";
-export type { SettlementHook, SettlementRecord } from "./settlement.js";
+export type {
+  SettlementHook,
+  SettlementTrigger,
+  SettlementStatus,
+  SettlementRequest,
+  SettlementResult,
+  SettlementRecord,
+  SettlementDecision,
+  SettlementReasonCode,
+  SettlementProvider,
+  SettlementStore,
+  SettlementProviderRegistry,
+  SettlementTriggerHook,
+} from "./settlement.js";
 export type { AuditRecord, AuditRecordStore, AuditQueryOptions } from "./audit.js";

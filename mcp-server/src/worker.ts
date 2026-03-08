@@ -8,22 +8,6 @@ import { handleToolCall, type ServiceDeps } from "./handlers.js";
 
 const VERSION = "0.1.0";
 
-// Session store for MCP protocol (in-memory, per Worker isolate)
-const sessions = new Map<
-  string,
-  { transport: WebStandardStreamableHTTPServerTransport; createdAt: number }
->();
-
-// Clean up sessions older than 5 minutes
-function cleanupSessions() {
-  const now = Date.now();
-  for (const [id, session] of sessions) {
-    if (now - session.createdAt > 5 * 60 * 1000) {
-      sessions.delete(id);
-    }
-  }
-}
-
 function createWorkerServer(deps: ServiceDeps): McpServer {
   const server = new McpServer({
     name: "agentbond",

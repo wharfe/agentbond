@@ -1,0 +1,24 @@
+{
+  "name": "@agentbond/settlement",
+  "version": "0.1.0",
+  "description": "Settlement layer for agentbond — inter-agent payment and settlement",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "dependencies": {
+    "@agentbond/core": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "test": "vitest run"
+  }
+}
