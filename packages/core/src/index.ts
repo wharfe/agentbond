@@ -10,7 +10,14 @@ export type {
   BudgetLedgerStore,
   BudgetService,
 } from "./authorization.js";
-export type { IntentRecord, IntentPolicy } from "./intent.js";
+export type {
+  IntentEvidence,
+  IntentRecord,
+  IntentPolicy,
+  IntentDecision,
+  IntentReasonCode,
+  IntentStore,
+} from "./intent.js";
 export type {
   ContractParty,
   Contract,

@@ -59,6 +59,12 @@ importers:
 
   packages/core: {}
 
+  packages/intent:
+    dependencies:
+      '@agentbond/core':
+        specifier: workspace:*
+        version: link:../core
+
 packages:
 
   '@babel/runtime@7.28.6':

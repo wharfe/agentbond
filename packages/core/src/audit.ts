@@ -5,6 +5,7 @@ export interface AuditRecord {
   id: string;
   actionId: string;
   authorizationTokenId?: string;
+  intentRef?: string;
   layer: "authorization" | "intent" | "contract" | "settlement";
   outcome: "allowed" | "denied" | "pending";
   reason?: string;
