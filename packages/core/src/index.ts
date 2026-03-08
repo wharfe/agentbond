@@ -20,9 +20,14 @@ export type {
 } from "./intent.js";
 export type {
   ContractParty,
+  ContractStatus,
+  ContractStatusTransition,
   Contract,
   DeliverableSpec,
   ContractCondition,
+  ContractDecision,
+  ContractReasonCode,
+  ContractStore,
 } from "./contract.js";
 export type { SettlementHook, SettlementRecord } from "./settlement.js";
 export type { AuditRecord, AuditRecordStore, AuditQueryOptions } from "./audit.js";

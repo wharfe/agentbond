@@ -1,0 +1,33 @@
+{
+  "name": "@agentbond/contract",
+  "version": "0.1.0",
+  "description": "Contract layer for agentbond — inter-agent task delegation agreements",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wharfe/agentbond.git",
+    "directory": "packages/contract"
+  },
+  "homepage": "https://github.com/wharfe/agentbond/tree/main/packages/contract",
+  "dependencies": {
+    "@agentbond/core": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "test": "vitest run"
+  }
+}
