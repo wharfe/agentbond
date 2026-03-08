@@ -1,6 +1,6 @@
 {
   "name": "@agentbond/auth",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Authorization engine for agentbond — token issuance, evaluation, and budget management",
   "license": "MIT",
   "type": "module",
