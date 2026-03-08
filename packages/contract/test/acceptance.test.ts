@@ -5,6 +5,7 @@ import type {
   AuditRecordStore,
   AuditQueryOptions,
   Contract,
+  ContractDecision,
 } from "@agentbond/core";
 import { ContractService } from "../src/service.js";
 import type { CreateContractInput, ValidationError } from "../src/validator.js";
@@ -401,5 +402,73 @@ describe("Contract Acceptance Tests", () => {
     // budget_cap is first but only checked via evaluateBudgetCap;
     // time_limit is checked in evaluateContract
     expect(decision.reasonCode).toBe("CONTRACT_DEADLINE_EXCEEDED");
+  });
+
+  it("time_limit with offset timezone is compared correctly", async () => {
+    await service.createContract(
+      makeInput({
+        id: "c-tz",
+        conditions: [
+          {
+            type: "time_limit",
+            // Deadline: 2025-01-01 00:00:00 UTC
+            value: { deadline: "2025-01-01T09:00:00+09:00" },
+          },
+        ],
+      }),
+    );
+    await service.transitionStatus({
+      contractId: "c-tz",
+      to: "active",
+      by: { id: alice.id },
+    });
+
+    // 2024-12-31T23:59:59Z is before the deadline (same instant as 2025-01-01T08:59:59+09:00)
+    const beforeDecision = await service.evaluateAt(
+      "c-tz",
+      "2024-12-31T23:59:59Z",
+    );
+    expect(beforeDecision.allowed).toBe(true);
+
+    // 2025-01-01T00:00:00Z is at/after the deadline
+    const afterDecision = await service.evaluateAt(
+      "c-tz",
+      "2025-01-01T00:00:00Z",
+    );
+    expect(afterDecision.allowed).toBe(false);
+    expect(afterDecision.reasonCode).toBe("CONTRACT_DEADLINE_EXCEEDED");
+  });
+
+  it("evaluateBudgetCap with invalid budgetLimit → INVALID_INPUT", async () => {
+    await service.createContract(
+      makeInput({
+        id: "c-budget-invalid",
+        conditions: [
+          {
+            type: "budget_cap",
+            value: { limit: "5000", currency: "credits" },
+          },
+        ],
+      }),
+    );
+    await service.transitionStatus({
+      contractId: "c-budget-invalid",
+      to: "active",
+      by: { id: alice.id },
+    });
+
+    const result1 = await service.evaluateBudgetCap("c-budget-invalid", "abc");
+    expect("ok" in result1 && result1.ok === false).toBe(true);
+
+    const result2 = await service.evaluateBudgetCap("c-budget-invalid", "1.5");
+    expect("ok" in result2 && result2.ok === false).toBe(true);
+
+    const result3 = await service.evaluateBudgetCap("c-budget-invalid", "");
+    expect("ok" in result3 && result3.ok === false).toBe(true);
+
+    // Valid input still works
+    const result4 = await service.evaluateBudgetCap("c-budget-invalid", "3000");
+    expect("ok" in result4).toBe(false);
+    expect((result4 as ContractDecision).allowed).toBe(true);
   });
 });

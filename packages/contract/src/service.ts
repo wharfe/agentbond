@@ -159,8 +159,23 @@ export class ContractService {
   async evaluateBudgetCap(
     contractId: string,
     budgetLimit: string,
-  ): Promise<ContractDecision> {
+  ): Promise<ContractDecision | ValidationError> {
     const now = new Date().toISOString() as IsoDatetime;
+
+    if (
+      !budgetLimit ||
+      typeof budgetLimit !== "string" ||
+      !/^[1-9]\d*$/.test(budgetLimit)
+    ) {
+      return {
+        ok: false,
+        error: {
+          code: "INVALID_INPUT",
+          message: "budgetLimit must be a positive integer string",
+          retryable: false,
+        },
+      };
+    }
 
     const contract = await this.contractStore.findById(contractId);
     if (!contract) {

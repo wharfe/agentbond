@@ -88,7 +88,8 @@ function evaluateConditions(
   for (const cond of contract.conditions) {
     if (cond.type === "time_limit") {
       const value = cond.value as { deadline: string };
-      if (now >= value.deadline) {
+      // Compare as Date objects to handle timezone offset differences correctly
+      if (new Date(now).getTime() >= new Date(value.deadline).getTime()) {
         return "CONTRACT_DEADLINE_EXCEEDED";
       }
     }
