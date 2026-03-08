@@ -2,7 +2,7 @@
 
 MCP (Model Context Protocol) server for [agentbond](https://github.com/wharfe/agentbond) — AI agent authorization and governance.
 
-Exposes 9 tools for authorization token management, action evaluation with atomic budget consumption, and audit logging.
+Exposes 17 tools for authorization, intent proof, contract management, action evaluation with atomic budget consumption, and audit logging.
 
 ## Installation
 
@@ -54,6 +54,24 @@ npx @agentbond/mcp-server
 | `agentbond_get_audit_log` | Query audit records with optional filters (layer, outcome, time range, limit). |
 | `agentbond_get_audit_by_action` | Get audit records for a specific action ID. |
 | `agentbond_get_audit_by_token` | Get audit records for a specific token ID. |
+
+### Intent Proof
+
+| Tool | Description |
+|---|---|
+| `agentbond_record_intent` | Record why an agent is performing an action, with evidence and confidence score. |
+| `agentbond_evaluate_intent_policy` | Evaluate intent policy for an action (checks if reasoning exists when required). |
+| `agentbond_get_intent` | Retrieve an intent record by ID. |
+| `agentbond_get_intent_by_action` | Retrieve an intent record by action ID. |
+
+### Contract Management
+
+| Tool | Description |
+|---|---|
+| `agentbond_create_contract` | Create an inter-agent contract (draft status). Requires 2 parties (principal + executor). |
+| `agentbond_transition_contract` | Transition contract status (draft→active→completed/disputed). |
+| `agentbond_evaluate_contract` | Evaluate whether a contract is valid (active, conditions met). |
+| `agentbond_get_contract` | Retrieve a contract by ID. |
 
 ## Example Workflow
 

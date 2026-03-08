@@ -61,3 +61,8 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Publish to Smithery Registry
+        run: npx @smithery/cli mcp publish "https://agentbond-mcp.sparrowwharfe.workers.dev/mcp" -n agentbond/mcp-server
+        env:
+          SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}

@@ -6,7 +6,8 @@ import { ContractService } from "@agentbond/contract";
 import { TOOL_DEFINITIONS } from "./tools.js";
 import { handleToolCall, type ServiceDeps } from "./handlers.js";
 
-const VERSION = "0.1.0";
+// Read version from package.json at build time via wrangler define
+const VERSION = "0.1.2";
 
 function createWorkerServer(deps: ServiceDeps): McpServer {
   const server = new McpServer({
@@ -109,56 +110,95 @@ export default {
         return transport.handleRequest(request);
       }
 
-      // Non-initialize request: auto-initialize first, then handle
-      const deps = createSessionDeps();
-      const server = createWorkerServer(deps);
-      const transport = new WebStandardStreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,
-      });
-      await server.connect(transport);
+      // Non-initialize request: auto-initialize first, then handle.
+      // Stateless transport only allows one request per instance, so use
+      // a session-scoped transport for the auto-init sequence.
+      try {
+        const deps = createSessionDeps();
+        const server = createWorkerServer(deps);
+        const transport = new WebStandardStreamableHTTPServerTransport({
+          sessionIdGenerator: () => crypto.randomUUID(),
+        });
+        await server.connect(transport);
 
-      const initReq = new Request(request.url, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          accept: "application/json, text/event-stream",
-        },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 0,
-          method: "initialize",
-          params: {
-            protocolVersion: "2025-03-26",
-            capabilities: {},
-            clientInfo: { name: "auto-init", version: "1.0.0" },
+        // Step 1: Initialize
+        const initReq = new Request(request.url, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json, text/event-stream",
           },
-        }),
-      });
-      await transport.handleRequest(initReq);
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 0,
+            method: "initialize",
+            params: {
+              protocolVersion: "2025-03-26",
+              capabilities: {},
+              clientInfo: { name: "auto-init", version: "1.0.0" },
+            },
+          }),
+        });
+        const initRes = await transport.handleRequest(initReq);
+        const sessionId = initRes.headers.get("mcp-session-id") ?? "";
+        // Drain SSE stream body
+        if (initRes.body) {
+          const reader = initRes.body.getReader();
+          while (true) {
+            const { done } = await reader.read();
+            if (done) break;
+          }
+        }
 
-      const notifyReq = new Request(request.url, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          accept: "application/json, text/event-stream",
-        },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "notifications/initialized",
-        }),
-      });
-      await transport.handleRequest(notifyReq);
+        // Step 2: Notify initialized
+        const notifyReq = new Request(request.url, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json, text/event-stream",
+            "mcp-session-id": sessionId,
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            method: "notifications/initialized",
+          }),
+        });
+        const notifyRes = await transport.handleRequest(notifyReq);
+        if (notifyRes.body) {
+          const reader = notifyRes.body.getReader();
+          while (true) {
+            const { done } = await reader.read();
+            if (done) break;
+          }
+        }
 
-      // Rebuild request with proper Accept header
-      const actualReq = new Request(request.url, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          accept: "application/json, text/event-stream",
-        },
-        body: JSON.stringify(parsed),
-      });
-      return transport.handleRequest(actualReq);
+        // Step 3: Forward the actual request
+        const actualReq = new Request(request.url, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json, text/event-stream",
+            "mcp-session-id": sessionId,
+          },
+          body: JSON.stringify(parsed),
+        });
+        return transport.handleRequest(actualReq);
+      } catch (err) {
+        return new Response(
+          JSON.stringify({
+            jsonrpc: "2.0",
+            error: {
+              code: -32603,
+              message: `Internal error: ${err instanceof Error ? err.message : String(err)}`,
+            },
+            id: (parsed as { id?: unknown }).id ?? null,
+          }),
+          {
+            status: 500,
+            headers: { "content-type": "application/json" },
+          },
+        );
+      }
     }
 
     return new Response("Not found", { status: 404 });
