@@ -1,35 +1,51 @@
 #!/usr/bin/env node
 
-import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { AuthService } from "@agentbond/auth";
 import { TOOL_DEFINITIONS } from "./tools.js";
 import { handleToolCall } from "./handlers.js";
 
-const require = createRequire(import.meta.url);
-const pkg = require("../package.json") as { version: string };
+// Version is kept in sync with package.json via changesets
+const VERSION = "0.1.0";
 
-const service = new AuthService();
+/**
+ * Create an agentbond MCP server instance with tools registered.
+ */
+export function createServer(service?: AuthService): McpServer {
+  const svc = service ?? new AuthService();
 
-const server = new McpServer({
-  name: "agentbond",
-  version: pkg.version,
-});
+  const server = new McpServer({
+    name: "agentbond",
+    version: VERSION,
+  });
 
-// Register all tools
-for (const tool of TOOL_DEFINITIONS) {
-  server.tool(
-    tool.name,
-    tool.description,
-    tool.inputSchema.shape,
-    async (args: Record<string, unknown>) => {
-      return handleToolCall(service, tool.name, args);
-    },
-  );
+  // Register all tools
+  for (const tool of TOOL_DEFINITIONS) {
+    server.tool(
+      tool.name,
+      tool.description,
+      tool.inputSchema.shape,
+      async (args: Record<string, unknown>) => {
+        return handleToolCall(svc, tool.name, args);
+      },
+    );
+  }
+
+  return server;
 }
 
-// Start server with stdio transport
+/**
+ * Create a sandbox server for Smithery capability scanning.
+ */
+export function createSandboxServer(): McpServer {
+  return createServer();
+}
+
+// Start server with stdio transport when run directly
+const service = new AuthService();
+const server = createServer(service);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

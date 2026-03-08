@@ -31,6 +31,9 @@ coverage/
 # Reviews
 .reviews/
 
+# Smithery
+.smithery/
+
 # WSL Zone.Identifier files
 *:Zone.Identifier
 
