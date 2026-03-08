@@ -1,0 +1,33 @@
+{
+  "name": "@agentbond/auth",
+  "version": "0.0.0",
+  "description": "Authorization engine for agentbond — token issuance, evaluation, and budget management",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wharfe/agentbond",
+    "directory": "packages/auth"
+  },
+  "homepage": "https://github.com/wharfe/agentbond/tree/main/packages/auth",
+  "dependencies": {
+    "@agentbond/core": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "test": "vitest run"
+  }
+}

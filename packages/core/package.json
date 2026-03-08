@@ -1,0 +1,30 @@
+{
+  "name": "@agentbond/core",
+  "version": "0.0.0",
+  "description": "Core type definitions for agentbond — agent-first governance infrastructure",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wharfe/agentbond",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/wharfe/agentbond/tree/main/packages/core",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "test": "echo \"No tests for core (type-only package)\""
+  }
+}
