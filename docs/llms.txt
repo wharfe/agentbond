@@ -1,0 +1,65 @@
+# agentbond
+
+Agent-first governance infrastructure for AI agents.
+Provides authorization, intent proof, contracts, and settlement capabilities.
+
+## MCP Server Tools
+
+### agentbond_issue_token
+Issue a new authorization token with scopes, budget, and expiry.
+Supports delegation chains via parentTokenId.
+- Input: { id, issuedBy, issuedTo, scopes, budget, expiry, parentTokenId? }
+- Output: AuthorizationToken
+
+### agentbond_evaluate_action
+Evaluate an action against an authorization token.
+Consumes budget atomically if authorized.
+- Input: { tokenId, action: { id, actor, scope, timestamp }, amount }
+- Output: AuthorizationDecision { allowed, reasonCode, message, retryable }
+
+### agentbond_revoke_token
+Permanently revoke a token. Child tokens are denied via cascade evaluation.
+- Input: { tokenId }
+
+### agentbond_suspend_token
+Temporarily suspend a token. Can be reactivated later.
+- Input: { tokenId }
+
+### agentbond_reactivate_token
+Reactivate a suspended token.
+- Input: { tokenId }
+
+### agentbond_get_token
+Retrieve a token by ID.
+- Input: { tokenId }
+- Output: AuthorizationToken
+
+### agentbond_get_audit_log
+Query audit records with optional filters.
+- Input: { layer?, outcome?, since?, until?, limit? }
+- Output: AuditRecord[]
+
+### agentbond_get_audit_by_action
+Get audit records for a specific action.
+- Input: { actionId }
+- Output: AuditRecord[]
+
+### agentbond_get_audit_by_token
+Get audit records for a specific token.
+- Input: { tokenId }
+- Output: AuditRecord[]
+
+## Reason Codes
+
+| Code | Meaning | Retryable |
+|---|---|---|
+| ALLOWED | Authorization granted | - |
+| TOKEN_NOT_FOUND | Token does not exist | No |
+| TOKEN_EXPIRED | Token has expired | No |
+| TOKEN_REVOKED | Token has been revoked | No |
+| TOKEN_SUSPENDED | Token is suspended | Yes |
+| SCOPE_MISMATCH | Action outside authorized scope | No |
+| BUDGET_EXCEEDED | Insufficient budget | Yes |
+| PARENT_TOKEN_INACTIVE | Parent token is inactive | Yes |
+| PARENT_SCOPE_EXCEEDED | Scope exceeds parent | No |
+| PARENT_BUDGET_EXCEEDED | Budget exceeds parent | No |

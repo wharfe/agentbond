@@ -1,0 +1,39 @@
+{
+  "name": "@agentbond/mcp-server",
+  "version": "0.0.0",
+  "description": "MCP server for agentbond — AI agent authorization and governance",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "agentbond-mcp": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wharfe/agentbond",
+    "directory": "mcp-server"
+  },
+  "homepage": "https://github.com/wharfe/agentbond/tree/main/mcp-server",
+  "dependencies": {
+    "@agentbond/core": "workspace:*",
+    "@agentbond/auth": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "zod": "^3.24.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "test": "vitest run"
+  }
+}
