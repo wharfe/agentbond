@@ -1,4 +1,5 @@
 name = "agentbond-mcp"
+account_id = "a1ffdbe476d116c374713cdd242bf426"
 main = "src/worker.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
