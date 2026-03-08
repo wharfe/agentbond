@@ -8,6 +8,7 @@
   "references": [
     { "path": "../packages/core" },
     { "path": "../packages/auth" },
-    { "path": "../packages/intent" }
+    { "path": "../packages/intent" },
+    { "path": "../packages/contract" }
   ]
 }

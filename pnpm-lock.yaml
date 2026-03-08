@@ -41,6 +41,9 @@ importers:
       '@agentbond/auth':
         specifier: workspace:*
         version: link:../packages/auth
+      '@agentbond/contract':
+        specifier: workspace:*
+        version: link:../packages/contract
       '@agentbond/core':
         specifier: workspace:*
         version: link:../packages/core

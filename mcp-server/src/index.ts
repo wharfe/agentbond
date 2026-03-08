@@ -4,6 +4,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { AuthService, InMemoryAuditRecordStore } from "@agentbond/auth";
 import { IntentService } from "@agentbond/intent";
+import { ContractService } from "@agentbond/contract";
 import { TOOL_DEFINITIONS } from "./tools.js";
 import { handleToolCall, type ServiceDeps } from "./handlers.js";
 
@@ -19,6 +20,7 @@ export function createServer(deps?: Partial<ServiceDeps>): McpServer {
   const serviceDeps: ServiceDeps = {
     authService: deps?.authService ?? new AuthService({ auditStore }),
     intentService: deps?.intentService ?? new IntentService({ auditStore }),
+    contractService: deps?.contractService ?? new ContractService({ auditStore }),
   };
 
   const server = new McpServer({

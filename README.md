@@ -32,7 +32,7 @@ The fastest way to use agentbond is as an MCP server. Add to your MCP client con
 }
 ```
 
-This gives your AI agent 9 tools for authorization token management, action evaluation, and audit logging.
+This gives your AI agent 17 tools for authorization, intent proof, contract management, and audit logging.
 
 ### As a TypeScript Library
 
@@ -157,6 +157,55 @@ console.log(denied.reasonCode); // "INTENT_REQUIRED"
 console.log(denied.retryable);  // true (record intent, then retry)
 ```
 
+### Contract Layer — Inter-Agent Agreements
+
+```typescript
+import { ContractService } from "@agentbond/contract";
+
+const contract = new ContractService();
+
+// 1. Create a contract — define an agreement between agents
+const c = await contract.createContract({
+  id: "contract-1",
+  parties: [
+    { agent: { id: "principal", type: "human" }, role: "principal" },
+    { agent: { id: "worker-agent", type: "ai" }, role: "executor" },
+  ],
+  deliverable: {
+    description: "Generate monthly invoice report",
+    acceptanceCriteria: ["PDF format", "Under 10 pages"],
+  },
+  conditions: [
+    { type: "time_limit", value: { deadline: "2025-12-31T23:59:59Z" } },
+    { type: "budget_cap", value: { limit: "5000", currency: "credits" } },
+  ],
+});
+
+console.log(c.status); // "draft"
+
+// 2. Activate the contract — only the principal can transition
+const activation = await contract.transitionStatus({
+  contractId: "contract-1",
+  to: "active",
+  by: { id: "principal" },
+});
+
+console.log(activation.allowed);    // true
+console.log(activation.reasonCode); // "ALLOWED"
+
+// 3. Evaluate — check if the contract is still valid
+const check = await contract.evaluate("contract-1");
+console.log(check.allowed); // true (deadline not exceeded, budget ok)
+
+// 4. Complete — mark the contract as done
+const completion = await contract.transitionStatus({
+  contractId: "contract-1",
+  to: "completed",
+  by: { id: "principal" },
+  reason: "Report delivered successfully",
+});
+```
+
 ## Authorization Decision Codes
 
 Every evaluation returns a machine-readable `AuthorizationDecision`:
@@ -185,6 +234,21 @@ Every intent evaluation returns a machine-readable `IntentDecision`:
 | `INTENT_NOT_FOUND` | Specified intent record not found | No |
 | `INVALID_INPUT` | Invalid input | No |
 
+## Contract Decision Codes
+
+Every contract evaluation returns a machine-readable `ContractDecision`:
+
+| Code | Meaning | Retryable |
+|---|---|---|
+| `ALLOWED` | Contract conditions met | — |
+| `CONTRACT_NOT_FOUND` | Contract does not exist | No |
+| `CONTRACT_NOT_ACTIVE` | Contract is not in active status | No |
+| `CONTRACT_DEADLINE_EXCEEDED` | Time limit condition exceeded | No |
+| `CONTRACT_BUDGET_EXCEEDED` | Budget cap condition exceeded | Yes |
+| `TRANSITION_NOT_ALLOWED` | Invalid status transition | No |
+| `UNAUTHORIZED_TRANSITION` | Only principal can transition | No |
+| `INVALID_INPUT` | Invalid input | No |
+
 ## Packages
 
 | Package | Description | Version |
@@ -192,6 +256,7 @@ Every intent evaluation returns a machine-readable `IntentDecision`:
 | [`@agentbond/core`](./packages/core) | Core type definitions and shared interfaces | [![npm](https://img.shields.io/npm/v/@agentbond/core)](https://www.npmjs.com/package/@agentbond/core) |
 | [`@agentbond/auth`](./packages/auth) | Authorization engine — token issuance, evaluation, budget management | [![npm](https://img.shields.io/npm/v/@agentbond/auth)](https://www.npmjs.com/package/@agentbond/auth) |
 | [`@agentbond/intent`](./packages/intent) | Intent layer — intent recording, evaluation, and audit integration | [![npm](https://img.shields.io/npm/v/@agentbond/intent)](https://www.npmjs.com/package/@agentbond/intent) |
+| [`@agentbond/contract`](./packages/contract) | Contract layer — inter-agent agreements, conditions, and status management | [![npm](https://img.shields.io/npm/v/@agentbond/contract)](https://www.npmjs.com/package/@agentbond/contract) |
 | [`@agentbond/mcp-server`](./mcp-server) | MCP server — expose agentbond as MCP tools | [![npm](https://img.shields.io/npm/v/@agentbond/mcp-server)](https://www.npmjs.com/package/@agentbond/mcp-server) |
 
 ## Architecture

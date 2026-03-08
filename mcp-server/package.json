@@ -27,6 +27,7 @@
     "@agentbond/core": "workspace:*",
     "@agentbond/auth": "workspace:*",
     "@agentbond/intent": "workspace:*",
+    "@agentbond/contract": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "zod": "^3.24.0"
   },

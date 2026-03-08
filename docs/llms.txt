@@ -6,7 +6,7 @@ agentbond lets AI agents issue, delegate, and enforce authorization tokens with 
 
 - Repository: https://github.com/wharfe/agentbond
 - License: MIT
-- npm: @agentbond/core, @agentbond/auth, @agentbond/mcp-server
+- npm: @agentbond/core, @agentbond/auth, @agentbond/intent, @agentbond/contract, @agentbond/mcp-server
 
 ## When to use agentbond
 
@@ -136,6 +136,43 @@ Retrieve an intent record by action ID.
 | ALLOWED | Intent recorded successfully | - |
 | INTENT_REQUIRED | Intent required by policy but not provided | Yes |
 | INTENT_NOT_FOUND | Specified intent record not found | No |
+| INVALID_INPUT | Invalid input | No |
+
+## Contract Tools
+
+#### agentbond_create_contract
+Create a new inter-agent contract in draft status.
+- Input: { id?, parties: [{ agent, role }], deliverable: { description, acceptanceCriteria, schema? }, conditions: [{ type, value }], authorizationTokenRef? }
+- Output: Contract
+- Errors: INVALID_INPUT (must have exactly 2 parties: one principal, one executor)
+
+#### agentbond_transition_contract
+Transition a contract's status. Only the principal can transition.
+- Input: { contractId, to: "active" | "completed" | "disputed", by: { id }, reason? }
+- Output: ContractDecision { allowed, reasonCode, message, retryable, evaluatedAt, contractId? }
+- Valid transitions: draft→active, active→completed, active→disputed, disputed→active, disputed→completed
+
+#### agentbond_evaluate_contract
+Evaluate whether a contract is valid for operations (active, conditions met).
+- Input: { contractId }
+- Output: ContractDecision
+
+#### agentbond_get_contract
+Retrieve a contract by ID.
+- Input: { contractId }
+- Output: Contract
+
+## Contract Reason Codes
+
+| Code | Meaning | Retryable |
+|---|---|---|
+| ALLOWED | Contract conditions met | - |
+| CONTRACT_NOT_FOUND | Contract does not exist | No |
+| CONTRACT_NOT_ACTIVE | Contract is not in active status | No |
+| CONTRACT_DEADLINE_EXCEEDED | Time limit condition exceeded | No |
+| CONTRACT_BUDGET_EXCEEDED | Budget cap condition exceeded | Yes |
+| TRANSITION_NOT_ALLOWED | Invalid status transition | No |
+| UNAUTHORIZED_TRANSITION | Only principal can transition | No |
 | INVALID_INPUT | Invalid input | No |
 
 ## TypeScript Library Usage

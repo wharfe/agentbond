@@ -2,7 +2,9 @@ import type { AuthService } from "@agentbond/auth";
 import type { ValidationError as AuthValidationError } from "@agentbond/auth";
 import type { IntentService } from "@agentbond/intent";
 import type { ValidationError as IntentValidationError } from "@agentbond/intent";
-import type { AuthorizationDecision, IntentRecord } from "@agentbond/core";
+import type { ContractService } from "@agentbond/contract";
+import type { ValidationError as ContractValidationError } from "@agentbond/contract";
+import type { AuthorizationDecision, IntentRecord, Contract } from "@agentbond/core";
 import {
   IssueTokenSchema,
   EvaluateActionSchema,
@@ -17,6 +19,10 @@ import {
   EvaluateIntentPolicySchema,
   GetIntentSchema,
   GetIntentByActionSchema,
+  CreateContractSchema,
+  TransitionContractSchema,
+  EvaluateContractSchema,
+  GetContractSchema,
 } from "./tools.js";
 
 type ToolResult = {
@@ -27,6 +33,7 @@ type ToolResult = {
 export interface ServiceDeps {
   authService: AuthService;
   intentService: IntentService;
+  contractService: ContractService;
 }
 
 function jsonResult(data: unknown): ToolResult {
@@ -52,6 +59,12 @@ function isIntentValidationError(
   result: IntentRecord | IntentValidationError,
 ): result is IntentValidationError {
   return "ok" in result && (result as IntentValidationError).ok === false;
+}
+
+function isContractValidationError(
+  result: Contract | ContractValidationError,
+): result is ContractValidationError {
+  return "ok" in result && (result as ContractValidationError).ok === false;
 }
 
 export async function handleToolCall(
@@ -158,6 +171,48 @@ export async function handleToolCall(
           return errorResult(`Intent record not found for action: ${input.actionId}`);
         }
         return jsonResult(record);
+      }
+
+      // Contract tools
+
+      case "agentbond_create_contract": {
+        const input = CreateContractSchema.parse(args);
+        const createInput = {
+          ...input,
+          conditions: input.conditions.map((c) => ({
+            type: c.type,
+            value: c.value as unknown,
+          })),
+        };
+        const result = await deps.contractService.createContract(createInput);
+        if (isContractValidationError(result)) {
+          return jsonResult(result);
+        }
+        return jsonResult(result);
+      }
+
+      case "agentbond_transition_contract": {
+        const input = TransitionContractSchema.parse(args);
+        const result = await deps.contractService.transitionStatus(input);
+        if ("ok" in result) {
+          return jsonResult(result);
+        }
+        return jsonResult(result);
+      }
+
+      case "agentbond_evaluate_contract": {
+        const input = EvaluateContractSchema.parse(args);
+        const result = await deps.contractService.evaluate(input.contractId);
+        return jsonResult(result);
+      }
+
+      case "agentbond_get_contract": {
+        const input = GetContractSchema.parse(args);
+        const contract = await deps.contractService.getContract(input.contractId);
+        if (!contract) {
+          return errorResult(`Contract not found: ${input.contractId}`);
+        }
+        return jsonResult(contract);
       }
 
       default:

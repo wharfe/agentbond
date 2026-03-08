@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { AuthService, InMemoryAuditRecordStore } from "@agentbond/auth";
 import { IntentService } from "@agentbond/intent";
+import { ContractService } from "@agentbond/contract";
 import { handleToolCall, type ServiceDeps } from "../src/handlers.js";
 
 describe("MCP Tool Handlers", () => {
@@ -14,6 +15,7 @@ describe("MCP Tool Handlers", () => {
     deps = {
       authService: new AuthService({ auditStore }),
       intentService: new IntentService({ auditStore }),
+      contractService: new ContractService({ auditStore }),
     };
   });
 
@@ -318,6 +320,87 @@ describe("MCP Tool Handlers", () => {
     it("returns error for non-existent intent", async () => {
       const result = await handleToolCall(deps, "agentbond_get_intent", {
         intentId: "nonexistent",
+      });
+      expect(result.isError).toBe(true);
+    });
+  });
+
+  describe("contract tools", () => {
+    const contractInput = {
+      id: "contract-1",
+      parties: [
+        { agent: { id: "principal-1", type: "human" as const }, role: "principal" as const },
+        { agent: { id: "executor-1", type: "ai" as const }, role: "executor" as const },
+      ],
+      deliverable: {
+        description: "Generate monthly report",
+        acceptanceCriteria: ["PDF format", "Under 10 pages"],
+      },
+      conditions: [
+        { type: "time_limit" as const, value: { deadline: "2099-12-31T23:59:59Z" } },
+      ],
+    };
+
+    it("creates a contract in draft status", async () => {
+      const result = await handleToolCall(deps, "agentbond_create_contract", contractInput);
+      expect(result.isError).toBeUndefined();
+      const data = JSON.parse(result.content[0]!.text);
+      expect(data.id).toBe("contract-1");
+      expect(data.status).toBe("draft");
+      expect(data.parties).toHaveLength(2);
+    });
+
+    it("transitions contract draft → active", async () => {
+      await handleToolCall(deps, "agentbond_create_contract", contractInput);
+      const result = await handleToolCall(deps, "agentbond_transition_contract", {
+        contractId: "contract-1",
+        to: "active",
+        by: { id: "principal-1" },
+      });
+      const data = JSON.parse(result.content[0]!.text);
+      expect(data.allowed).toBe(true);
+      expect(data.reasonCode).toBe("ALLOWED");
+    });
+
+    it("denies transition by executor", async () => {
+      await handleToolCall(deps, "agentbond_create_contract", contractInput);
+      const result = await handleToolCall(deps, "agentbond_transition_contract", {
+        contractId: "contract-1",
+        to: "active",
+        by: { id: "executor-1" },
+      });
+      const data = JSON.parse(result.content[0]!.text);
+      expect(data.allowed).toBe(false);
+      expect(data.reasonCode).toBe("UNAUTHORIZED_TRANSITION");
+    });
+
+    it("evaluates an active contract", async () => {
+      await handleToolCall(deps, "agentbond_create_contract", contractInput);
+      await handleToolCall(deps, "agentbond_transition_contract", {
+        contractId: "contract-1",
+        to: "active",
+        by: { id: "principal-1" },
+      });
+      const result = await handleToolCall(deps, "agentbond_evaluate_contract", {
+        contractId: "contract-1",
+      });
+      const data = JSON.parse(result.content[0]!.text);
+      expect(data.allowed).toBe(true);
+    });
+
+    it("retrieves a contract by ID", async () => {
+      await handleToolCall(deps, "agentbond_create_contract", contractInput);
+      const result = await handleToolCall(deps, "agentbond_get_contract", {
+        contractId: "contract-1",
+      });
+      const data = JSON.parse(result.content[0]!.text);
+      expect(data.id).toBe("contract-1");
+      expect(data.deliverable.description).toBe("Generate monthly report");
+    });
+
+    it("returns error for non-existent contract", async () => {
+      const result = await handleToolCall(deps, "agentbond_get_contract", {
+        contractId: "nonexistent",
       });
       expect(result.isError).toBe(true);
     });

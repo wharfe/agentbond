@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { AuthService, InMemoryAuditRecordStore } from "@agentbond/auth";
 import { IntentService } from "@agentbond/intent";
+import { ContractService } from "@agentbond/contract";
 import { TOOL_DEFINITIONS } from "./tools.js";
 import { handleToolCall, type ServiceDeps } from "./handlers.js";
 
@@ -46,6 +47,7 @@ export default {
       const deps: ServiceDeps = {
         authService: new AuthService({ auditStore }),
         intentService: new IntentService({ auditStore }),
+        contractService: new ContractService({ auditStore }),
       };
       const server = createWorkerServer(deps);
       const transport = new WebStandardStreamableHTTPServerTransport({

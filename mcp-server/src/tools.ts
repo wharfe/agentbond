@@ -124,6 +124,47 @@ export const GetIntentByActionSchema = z.object({
   actionId: z.string(),
 });
 
+// Contract schemas
+
+const ContractPartySchema = z.object({
+  agent: AgentIdentitySchema,
+  role: z.enum(["principal", "executor", "approver", "payer", "payee"]),
+});
+
+const DeliverableSpecSchema = z.object({
+  description: z.string().max(1000, "Description must be 1000 characters or less"),
+  schema: z.record(z.unknown()).optional(),
+  acceptanceCriteria: z.array(z.string()),
+});
+
+const ContractConditionSchema = z.object({
+  type: z.enum(["budget_cap", "time_limit", "approval_gate", "custom"]),
+  value: z.unknown().transform((v) => v as unknown),
+});
+
+export const CreateContractSchema = z.object({
+  id: z.string().optional(),
+  parties: z.array(ContractPartySchema).length(2),
+  deliverable: DeliverableSpecSchema,
+  conditions: z.array(ContractConditionSchema),
+  authorizationTokenRef: z.string().min(1).optional(),
+});
+
+export const TransitionContractSchema = z.object({
+  contractId: z.string(),
+  to: z.enum(["active", "completed", "disputed"]),
+  by: z.object({ id: z.string() }),
+  reason: z.string().max(500).optional(),
+});
+
+export const EvaluateContractSchema = z.object({
+  contractId: z.string(),
+});
+
+export const GetContractSchema = z.object({
+  contractId: z.string(),
+});
+
 export const TOOL_DEFINITIONS = [
   {
     name: "agentbond_issue_token",
@@ -197,5 +238,30 @@ export const TOOL_DEFINITIONS = [
     name: "agentbond_get_intent_by_action",
     description: "Retrieve an intent record by action ID.",
     inputSchema: GetIntentByActionSchema,
+  },
+  // Contract tools
+
+  {
+    name: "agentbond_create_contract",
+    description:
+      "Create a new inter-agent contract in draft status. Requires exactly 2 parties (one principal, one executor). Conditions can include budget_cap, time_limit, approval_gate, or custom.",
+    inputSchema: CreateContractSchema,
+  },
+  {
+    name: "agentbond_transition_contract",
+    description:
+      "Transition a contract's status. Only the principal can transition. Valid transitions: draft→active, active→completed, active→disputed, disputed→active, disputed→completed.",
+    inputSchema: TransitionContractSchema,
+  },
+  {
+    name: "agentbond_evaluate_contract",
+    description:
+      "Evaluate whether a contract is valid for operations. Checks that the contract is active and all conditions (time_limit, budget_cap) are met.",
+    inputSchema: EvaluateContractSchema,
+  },
+  {
+    name: "agentbond_get_contract",
+    description: "Retrieve a contract by ID.",
+    inputSchema: GetContractSchema,
   },
 ] as const;
