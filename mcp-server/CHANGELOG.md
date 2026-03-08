@@ -1,5 +1,11 @@
 # @agentbond/mcp-server
 
+## 0.1.2
+
+### Patch Changes
+
+- 641da7e: Add contract layer tools (create, transition, evaluate, get) to MCP server
+
 ## 0.1.1
 
 ### Patch Changes
