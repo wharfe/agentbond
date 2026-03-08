@@ -1,4 +1,4 @@
-# @agentbond/core
+# @agentbond/intent
 
 ## 0.1.1
 
@@ -6,9 +6,5 @@
 
 - f59159b: Add @agentbond/intent package — intent recording, evaluation, and audit integration.
   Core types updated: IntentRecord, IntentEvidence, IntentDecision, IntentReasonCode, IntentStore added; AuditRecord.intentRef added.
-
-## 0.1.0
-
-### Minor Changes
-
-- 324eb8d: Initial release — core types, authorization engine, and MCP server
+- Updated dependencies [f59159b]
+  - @agentbond/core@0.1.1
