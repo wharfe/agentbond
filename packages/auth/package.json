@@ -3,7 +3,12 @@
   "version": "0.1.1",
   "description": "Authorization engine for agentbond — token issuance, evaluation, and budget management",
   "license": "MIT",
+  "author": "agentbond contributors",
+  "keywords": ["ai-agents", "authorization", "token", "budget", "agentbond"],
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -20,6 +25,9 @@
     "directory": "packages/auth"
   },
   "homepage": "https://github.com/wharfe/agentbond/tree/main/packages/auth",
+  "bugs": {
+    "url": "https://github.com/wharfe/agentbond/issues"
+  },
   "dependencies": {
     "@agentbond/core": "workspace:*"
   },

@@ -3,7 +3,12 @@
   "version": "0.1.0",
   "description": "Settlement layer for agentbond — inter-agent payment and settlement",
   "license": "MIT",
+  "author": "agentbond contributors",
+  "keywords": ["ai-agents", "settlement", "payment", "agentbond"],
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -11,6 +16,15 @@
     }
   },
   "files": ["dist", "README.md"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wharfe/agentbond.git",
+    "directory": "packages/settlement"
+  },
+  "homepage": "https://github.com/wharfe/agentbond/tree/main/packages/settlement",
+  "bugs": {
+    "url": "https://github.com/wharfe/agentbond/issues"
+  },
   "dependencies": {
     "@agentbond/core": "workspace:*"
   },

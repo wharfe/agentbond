@@ -3,7 +3,12 @@
   "version": "0.1.1",
   "description": "Intent layer for agentbond — intent recording, evaluation, and audit integration",
   "license": "MIT",
+  "author": "agentbond contributors",
+  "keywords": ["ai-agents", "intent-proof", "audit", "agentbond"],
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -20,6 +25,9 @@
     "directory": "packages/intent"
   },
   "homepage": "https://github.com/wharfe/agentbond/tree/main/packages/intent",
+  "bugs": {
+    "url": "https://github.com/wharfe/agentbond/issues"
+  },
   "dependencies": {
     "@agentbond/core": "workspace:*"
   },

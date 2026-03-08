@@ -9,6 +9,9 @@ body:
       options:
         - "@agentbond/core"
         - "@agentbond/auth"
+        - "@agentbond/intent"
+        - "@agentbond/contract"
+        - "@agentbond/settlement"
         - "@agentbond/mcp-server"
         - New package
         - Other

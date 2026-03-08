@@ -3,7 +3,12 @@
   "version": "0.1.2",
   "description": "MCP server for agentbond — AI agent authorization and governance",
   "license": "MIT",
+  "author": "agentbond contributors",
+  "keywords": ["ai-agents", "mcp", "mcp-server", "authorization", "agentbond"],
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "bin": {
     "agentbond-mcp": "./dist/index.js"
   },
@@ -23,6 +28,9 @@
     "directory": "mcp-server"
   },
   "homepage": "https://github.com/wharfe/agentbond/tree/main/mcp-server",
+  "bugs": {
+    "url": "https://github.com/wharfe/agentbond/issues"
+  },
   "dependencies": {
     "@agentbond/core": "workspace:*",
     "@agentbond/auth": "workspace:*",

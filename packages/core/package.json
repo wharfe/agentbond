@@ -3,7 +3,12 @@
   "version": "0.1.1",
   "description": "Core type definitions for agentbond — agent-first governance infrastructure",
   "license": "MIT",
+  "author": "agentbond contributors",
+  "keywords": ["ai-agents", "governance", "types", "agentbond"],
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -20,6 +25,9 @@
     "directory": "packages/core"
   },
   "homepage": "https://github.com/wharfe/agentbond/tree/main/packages/core",
+  "bugs": {
+    "url": "https://github.com/wharfe/agentbond/issues"
+  },
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",

@@ -52,7 +52,7 @@ pnpm changeset
 
 ## Design Principles
 
-All contributions should align with the [design constitution](docs/HANDOFF.md):
+All contributions should align with the [design principles](README.md#design-principles):
 
 1. **Discoverability** — Agents can discover and understand tools autonomously
 2. **Predictability** — Same input produces same output

@@ -19,4 +19,4 @@
 - [ ] `pnpm test` passes
 - [ ] Added/updated tests for new functionality
 - [ ] Added changeset (`pnpm changeset`) if this affects a published package
-- [ ] Changes align with [design principles](./docs/HANDOFF.md)
+- [ ] Changes align with [design principles](./README.md#design-principles)

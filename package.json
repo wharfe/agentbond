@@ -12,6 +12,8 @@
     "type": "git",
     "url": "git+https://github.com/wharfe/agentbond.git"
   },
+  "author": "agentbond contributors",
+  "keywords": ["ai-agents", "authorization", "governance", "mcp", "agent-infrastructure"],
   "homepage": "https://github.com/wharfe/agentbond",
   "bugs": {
     "url": "https://github.com/wharfe/agentbond/issues"
