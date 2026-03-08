@@ -8,6 +8,14 @@
     "node": ">=20"
   },
   "packageManager": "pnpm@10.30.3",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wharfe/agentbond.git"
+  },
+  "homepage": "https://github.com/wharfe/agentbond",
+  "bugs": {
+    "url": "https://github.com/wharfe/agentbond/issues"
+  },
   "scripts": {
     "build": "turbo build",
     "test": "turbo test",
