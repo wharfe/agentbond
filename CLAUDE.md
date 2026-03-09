@@ -12,6 +12,15 @@ It handles authorization, intent proof, contracts, and settlement.
 - Test framework: vitest
 - License: MIT
 
+## Suite Position
+
+This repository is **Authorization Substrate** in the [Agent Trust Suite](https://github.com/wharfe/agent-trust-suite).
+
+- **Does:** Governance infrastructure for autonomous AI agents. Provides authorization (token-based permissions, budget control, delegation), intent tracking, contract lifecycle management, and settlement. Exposes 17 tools via MCP Server.
+- **Does not:** Define behavioral contracts (that's agentcontract) or collect runtime telemetry (that's agent-trust-telemetry).
+- **Install:** Published to npm. `npx @agentbond/mcp-server` or `npm install @agentbond/auth`
+- **Suite navigation:** See [AGENTS.md](https://github.com/wharfe/agent-trust-suite/blob/main/AGENTS.md) for full component map.
+
 ## Architecture
 
 ```
@@ -34,6 +43,7 @@ It handles authorization, intent proof, contracts, and settlement.
 | `@agentbond/auth` | `packages/auth` | Authorization engine |
 | `@agentbond/intent` | `packages/intent` | Intent proof layer |
 | `@agentbond/contract` | `packages/contract` | Contract layer |
+| `@agentbond/settlement` | `packages/settlement` | Settlement execution layer |
 | `@agentbond/mcp-server` | `mcp-server` | MCP server (17 tools) |
 
 ## Implementation Rules
